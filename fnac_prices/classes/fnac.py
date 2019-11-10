@@ -1,5 +1,6 @@
 import logging
 
+from fnac_prices import settings
 from fnac_prices.exceptions.fnac import FNACLoginException
 from fnac_prices.selenium.fnac import FNACSelenium
 from fnac_prices.utils import file
@@ -17,7 +18,12 @@ class ManagedApp:
 
     def __run_login(self):
         self.logger.info("Logging in...")
-        self.fnac.make_login()
+        try:
+            self.fnac.make_login()
+        except FNACLoginException:
+            self.logger.error("Couldn't login at '{}'. Please check your credentials."
+                              .format(settings.HOMEPAGE))
+            exit()
 
     def __get_inventory(self):
         self.logger.info("Opening inventory...")

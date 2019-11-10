@@ -34,7 +34,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("-m", "--email", required=True, help="FNAC user email")
     ap.add_argument("-p", "--password", required=True,
-                    help="FNAC user password (cleartext")
+                    help="FNAC user password (cleartext)")
     ap.add_argument("-i", "--input", required=False,
                     help="FNAC input inventory")
     ap.add_argument("-d", "--debug", dest="log_level", action="store_const",

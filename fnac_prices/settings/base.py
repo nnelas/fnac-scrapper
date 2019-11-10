@@ -1,14 +1,14 @@
 # Author
 __author__ = "Nuno Nelas"
-__license__ = "GPL"
-__version__ = "1.1.3"
+__license__ = "GPL-3.0"
+__version__ = "1.2.0"
 __maintainer__ = "Nuno Nelas"
 __email__ = "nuno.nelas(at)icloud(dot)com"
 __status__ = "Production"
 
 # Versions
 BASE_VERSION = __version__
-BASE_CODENAME = "beta"
+BASE_CODENAME = "alpha"
 
 # FNAC Settings
 STORE = "skyhe"

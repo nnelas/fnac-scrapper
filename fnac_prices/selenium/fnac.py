@@ -36,7 +36,9 @@ class FNACSelenium:
             password.send_keys(self.password)
             button.click()
 
-            if self.browser.current_url != settings.HOMEPAGE:
+            time.sleep(settings.TIMER_PAGE)
+
+            if settings.LOGIN_URL in self.browser.current_url:
                 raise FNACLoginException
 
         except NoSuchElementException:  # most likely already logged in
@@ -45,12 +47,10 @@ class FNACSelenium:
     def make_login(self):
         self.browser.get(settings.LOGIN_URL)
         self.__login()
-        time.sleep(settings.TIMER_PAGE)
 
     def open_inventory(self, index: int):
         self.browser.get(settings.INVENTORY_URL.format(id=index, num=settings.PRODUCTS))
         self.__login()
-        time.sleep(settings.TIMER_PAGE)
 
     def get_total_products(self) -> int:
         total = self.browser.find_element_by_class_name("filters__total").text
@@ -112,9 +112,8 @@ class FNACSelenium:
         return self.inventory
 
     def change_product_price(self, changed: Changed):
-        self.open_inventory(1)  # only needed to login
+        self.open_inventory(1)  # only needed to login, if input file is added
         for product in changed.products:
-            # change store
             self.browser.get(product.url)
             price = self.browser.find_element_by_id("shop_product_price")
             price.clear()
