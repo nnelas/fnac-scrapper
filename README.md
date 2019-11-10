@@ -1,6 +1,9 @@
-# fnac-price
+# fnac-scrapper
 
-## Requirements
+Python Application that allows FNAC Pro members to manage their products easily
+
+
+## Product Requirements
 
 * Platform (FNAC) login
     * `https://secure.fnac.pt/identity/gateway/signin`
