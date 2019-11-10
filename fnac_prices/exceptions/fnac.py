@@ -1,0 +1,2 @@
+class FNACLoginException(Exception):
+    pass
