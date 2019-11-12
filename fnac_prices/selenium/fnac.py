@@ -118,6 +118,6 @@ class FNACSelenium:
             price = self.browser.find_element_by_id("shop_product_price")
             price.clear()
             price.send_keys(str(product.new_offer.price))
-            time.sleep(settings.TIMER_OP)
             button = self.browser.find_element_by_id("shop_product_publish")
-            # button.click()
+            button.click()
+            time.sleep(settings.TIMER_OP)
