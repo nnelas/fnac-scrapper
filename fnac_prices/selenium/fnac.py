@@ -59,18 +59,19 @@ class FNACSelenium:
         return int(re.search(r"(\d+)", total).group(1))
 
     def query_inventory(self) -> Inventory:
-        def get_url(product) -> str:
-            details = product.find_elements_by_tag_name("td")
-            for i, detail in enumerate(details):
-                if i == 1:  # link
-                    return detail.find_element_by_tag_name("a").get_attribute("href")
-
         table = self.browser.find_element_by_id("myOfferTable")
         products = table.find_elements_by_tag_name("tr")
         for product in products:
-            url = get_url(product)
-            if url:
-                self.inventory.products.append(Product(get_url(product)))
+            details = product.find_elements_by_tag_name("td")
+            for i, detail in enumerate(details):
+                if i == 1:  # link
+                    url = detail.find_element_by_tag_name("a").get_attribute("href")
+                    ean = detail.find_element_by_tag_name("a").get_attribute("href").text
+
+                if url and ean:
+                    self.inventory.products.append(Product(
+                        url=url,
+                        ean=ean))
 
         return self.inventory
 
@@ -120,7 +121,7 @@ class FNACSelenium:
                         ))
             except NoSuchElementException:
                 self.logger.warning("Couldn't fetch product information for item: '{}'"
-                                    .format(product.view))
+                                    .format(product.ean))
         return self.inventory
 
     def change_product_price(self, changed: Changed):

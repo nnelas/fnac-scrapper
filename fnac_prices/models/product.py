@@ -14,6 +14,7 @@ class Offer:
 @dataclass
 class Product:
     url: str
+    ean: str
     view: str = field(default=None)
     name: str = field(default=None)
     offers: List[Offer] = field(default_factory=list)

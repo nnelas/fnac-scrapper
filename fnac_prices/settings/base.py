@@ -1,7 +1,7 @@
 # Author
 __author__ = "Nuno Nelas"
 __license__ = "GPL-3.0"
-__version__ = "1.2.0"
+__version__ = "1.2.2"
 __maintainer__ = "Nuno Nelas"
 __email__ = "nuno.nelas(at)icloud(dot)com"
 __status__ = "Production"
