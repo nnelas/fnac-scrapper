@@ -32,7 +32,7 @@ class ManagedApp:
         total_pages = Helper.get_number_of_pages(total_prod)
         self.logger.info("Found a total of '{}' products".format(total_prod))
 
-        for index in range(1, total_pages):
+        for index in range(1, 3):
             self.logger.info("Opening inventory - page {} of {}"
                              .format(index, total_pages))
             self.fnac.open_inventory(index)

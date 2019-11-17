@@ -1,3 +1,4 @@
+import logging
 import re
 import time
 
@@ -15,6 +16,7 @@ class FNACSelenium:
     def __init__(self, email: str, password: str):
         self.email = email
         self.password = password
+        self.logger = logging.getLogger("Selenium")
         self.browser = self.__make_selenium()
         self.inventory = Inventory()
 
@@ -73,7 +75,10 @@ class FNACSelenium:
         return self.inventory
 
     def query_views(self, inventory: Inventory) -> Inventory:
-        for product in inventory.products:
+        for idx, product in enumerate(inventory.products):
+            if idx % 10 == 0:
+                self.logger.info("Fetching product information from products {} to {}"
+                                 .format(idx, idx + 10))
             self.browser.get(product.url)
             product.view = self.browser.find_element_by_class_name("prod")\
                 .find_element_by_tag_name("a").get_attribute("href")
@@ -81,43 +86,55 @@ class FNACSelenium:
         return self.inventory
 
     def query_products(self, inventory: Inventory) -> Inventory:
-        for product in inventory.products:
-            self.browser.get(product.view)
-            product.name = self.browser\
-                .find_element_by_class_name("f-productHeader-Title").text
-            time.sleep(settings.TIMER_OP)
+        for idx, product in enumerate(inventory.products):
+            try:
+                if idx % 10 == 0:
+                    self.logger.info("Fetching other prices from products {} to {}"
+                                     .format(idx, idx+10))
+                self.browser.get(product.view)
+                product.name = self.browser\
+                    .find_element_by_class_name("f-productHeader-Title").text
+                time.sleep(settings.TIMER_OP)
 
-            unordered_list = self.browser.find_element_by_class_name("f-otherOffers-list")
-            offers = unordered_list.find_elements_by_tag_name("li")
-            for offer in offers:
-                price = offer.find_element_by_class_name("f-otherOffers-itemPrice").text
-                shipping = offer.find_element_by_class_name("f-otherOffers-shipping").text
-                store = offer.find_element_by_class_name("f-otherOffers-sellerName").text
+                unordered_list = self.browser.find_element_by_class_name("f-otherOffers-list")
+                offers = unordered_list.find_elements_by_tag_name("li")
+                for offer in offers:
+                    price = offer.find_element_by_class_name("f-otherOffers-itemPrice").text
+                    shipping = offer.find_element_by_class_name("f-otherOffers-shipping").text
+                    store = offer.find_element_by_class_name("f-otherOffers-sellerName").text
 
-                # to cope with promotions. last price is first
-                prices = re.findall(r"(\d*,\d* €)", price)
-                for price in prices:
-                    # to remove currency and cast to float
-                    price = price.replace(",", ".")[:-2]
-                    break
+                    # to cope with promotions. last price is first
+                    prices = re.findall(r"(\d*,\d* €)", price)
+                    for price in prices:
+                        # to remove currency and cast to float
+                        price = price.replace(",", ".")[:-2]
+                        break
 
-                shipping = shipping.replace(",", ".").replace("Custos de envio +", "")[:-2]
+                    shipping = shipping.replace(",", ".").replace("Custos de envio +", "")[:-2]
 
-                product.offers.append(
-                    Offer(
-                        name=store,
-                        price=float(price),
-                        shipping=float(shipping)
-                    ))
+                    product.offers.append(
+                        Offer(
+                            name=store,
+                            price=float(price),
+                            shipping=float(shipping)
+                        ))
+            except NoSuchElementException:
+                self.logger.warning("Couldn't fetch product information for item: '{}'"
+                                    .format(product.view))
         return self.inventory
 
     def change_product_price(self, changed: Changed):
         self.open_inventory(1)  # only needed to login, if input file is added
         for product in changed.products:
-            self.browser.get(product.url)
-            price = self.browser.find_element_by_id("shop_product_price")
-            price.clear()
-            price.send_keys(str(product.new_offer.price))
-            button = self.browser.find_element_by_id("shop_product_publish")
-            button.click()
-            time.sleep(settings.TIMER_OP)
+            try:
+                self.browser.get(product.url)
+                price = self.browser.find_element_by_id("shop_product_price")
+                price.clear()
+                price.send_keys(str(product.new_offer.price))
+                button = self.browser.find_element_by_id("shop_product_publish")
+                button.click()
+                self.logger.info("Changed price for item: '{}'".format(product.url))
+                time.sleep(settings.TIMER_OP)
+            except NoSuchElementException:
+                self.logger.warning("Couldn't change price for item: '{}'"
+                                    .format(product.url))
