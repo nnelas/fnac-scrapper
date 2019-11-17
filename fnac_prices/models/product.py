@@ -13,8 +13,8 @@ class Offer:
 
 @dataclass
 class Product:
-    url: str
-    ean: str
+    url: str = field(default=None)
+    ean: str = field(default=None)
     view: str = field(default=None)
     name: str = field(default=None)
     offers: List[Offer] = field(default_factory=list)
@@ -29,6 +29,7 @@ class Inventory:
 @dataclass
 class Match:
     url: str
+    ean: str
     store_offer: Offer
     lowest_offer: Offer
 
@@ -42,6 +43,7 @@ class Renewed:
 @dataclass
 class Market:
     url: str
+    ean: str
     old_offer: Offer
     new_offer: Offer
     lowest_offer: Offer

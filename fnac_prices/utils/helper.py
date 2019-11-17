@@ -25,6 +25,7 @@ class Helper:
 
             renewed.products.append(Match(
                 url=product.url,
+                ean=product.ean,
                 store_offer=store_offer,
                 lowest_offer=lowest_offer
             ))
@@ -41,6 +42,7 @@ class Helper:
                     new_price -= settings.DECREASE_BY
 
                 market = Market(url=product.url,
+                                ean=product.ean,
                                 old_offer=product.store_offer,
                                 new_offer=Offer(product.store_offer.name,
                                                 (math.floor(new_price*100)/100),

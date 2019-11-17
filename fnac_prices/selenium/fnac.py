@@ -61,18 +61,19 @@ class FNACSelenium:
     def query_inventory(self) -> Inventory:
         table = self.browser.find_element_by_id("myOfferTable")
         products = table.find_elements_by_tag_name("tr")
-        for product in products:
-            details = product.find_elements_by_tag_name("td")
+        for item in products:
+            product = Product()
+            details = item.find_elements_by_tag_name("td")
             for i, detail in enumerate(details):
                 if i == 1:  # link
                     url = detail.find_element_by_tag_name("a").get_attribute("href")
-                    ean = detail.find_element_by_tag_name("a").get_attribute("href").text
+                    product.url = url
+                if i == 2:  # ean
+                    ean = detail.find_element_by_tag_name("a").text
+                    product.ean = ean
 
-                if url and ean:
-                    self.inventory.products.append(Product(
-                        url=url,
-                        ean=ean))
-
+            if product.url and product.ean:
+                self.inventory.products.append(product)
         return self.inventory
 
     def query_views(self, inventory: Inventory) -> Inventory:
@@ -80,10 +81,14 @@ class FNACSelenium:
             if idx % 10 == 0:
                 self.logger.info("Fetching product information from products {} to {}"
                                  .format(idx, idx + 10))
-            self.browser.get(product.url)
-            product.view = self.browser.find_element_by_class_name("prod")\
-                .find_element_by_tag_name("a").get_attribute("href")
-            time.sleep(settings.TIMER_OP)
+            try:
+                self.browser.get(product.url)
+                product.view = self.browser.find_element_by_class_name("prod")\
+                    .find_element_by_tag_name("a").get_attribute("href")
+                time.sleep(settings.TIMER_OP)
+            except NoSuchElementException:
+                self.logger.warning("Couldn't fetch product information for item: "
+                                    "'{}'".format(product.ean))
         return self.inventory
 
     def query_products(self, inventory: Inventory) -> Inventory:
@@ -120,8 +125,8 @@ class FNACSelenium:
                             shipping=float(shipping)
                         ))
             except NoSuchElementException:
-                self.logger.warning("Couldn't fetch product information for item: '{}'"
-                                    .format(product.ean))
+                self.logger.warning("Couldn't fetch other prices information for item: "
+                                    "'{}'".format(product.ean))
         return self.inventory
 
     def change_product_price(self, changed: Changed):
@@ -134,9 +139,11 @@ class FNACSelenium:
                 price.send_keys(str(product.new_offer.price))
                 button = self.browser.find_element_by_id("shop_product_publish")
                 button.click()
-                self.logger.info("Changed price successfully for item: '{}'"
-                                 .format(product.url))
+                self.logger.info("Changed price successfully for item: '{}' - "
+                                 "old price: '{}', new price: '{}'"
+                                 .format(product.ean, product.old_offer.price,
+                                         product.new_offer.price))
                 time.sleep(settings.TIMER_OP)
             except NoSuchElementException:
                 self.logger.warning("Couldn't change price for item: '{}'"
-                                    .format(product.url))
+                                    .format(product.ean))
