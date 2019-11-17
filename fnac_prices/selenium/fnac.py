@@ -133,7 +133,8 @@ class FNACSelenium:
                 price.send_keys(str(product.new_offer.price))
                 button = self.browser.find_element_by_id("shop_product_publish")
                 button.click()
-                self.logger.info("Changed price for item: '{}'".format(product.url))
+                self.logger.info("Changed price successfully for item: '{}'"
+                                 .format(product.url))
                 time.sleep(settings.TIMER_OP)
             except NoSuchElementException:
                 self.logger.warning("Couldn't change price for item: '{}'"

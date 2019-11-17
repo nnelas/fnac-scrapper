@@ -49,6 +49,8 @@ class ManagedApp:
         file.write_match_file(renewed)
         changed = Helper.build_lowest_prices(renewed)
         file.write_changed_file(changed)
+        self.logger.info("Found a total of '{}' products to change"
+                         .format(len(changed.products)))
         self.fnac.change_product_price(changed)
 
     def run(self):
