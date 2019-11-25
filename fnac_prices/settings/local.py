@@ -2,8 +2,8 @@ import os
 from datetime import datetime
 
 # Project directories
-WORKING_DIR = os.path.join(os.path.expanduser("~"), "Documents", "Hackerman", "python")
-PROJECT_DIR = os.path.join(WORKING_DIR, "fnac-prices")
+WORKING_DIR = os.path.join(os.path.expanduser("~"), "Desktop")
+PROJECT_DIR = os.path.join(WORKING_DIR, "fnac-scrapper")
 LOGS_DIR = os.path.join(PROJECT_DIR, "logs")
 
 # Drivers paths
@@ -11,7 +11,7 @@ DRIVERS_DIR = os.path.join(PROJECT_DIR, "drivers")
 CHROME_PATH = os.path.join(DRIVERS_DIR, "chromedriver")
 
 # Drivers options
-HEADLESS = False
+HEADLESS = True
 
 # Timers
 TIMER_PAGE = 5
