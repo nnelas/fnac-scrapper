@@ -124,7 +124,7 @@ class FNACSelenium:
                             price=float(price),
                             shipping=float(shipping)
                         ))
-            except NoSuchElementException:
+            except Exception:
                 self.logger.warning("Couldn't fetch other prices information for item: "
                                     "'{}'".format(product.ean))
         return self.inventory
@@ -144,6 +144,6 @@ class FNACSelenium:
                                  .format(product.ean, product.old_offer.price,
                                          product.new_offer.price))
                 time.sleep(settings.TIMER_OP)
-            except NoSuchElementException:
+            except Exception:
                 self.logger.warning("Couldn't change price for item: '{}'"
                                     .format(product.ean))
