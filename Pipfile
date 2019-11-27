@@ -10,5 +10,3 @@ selenium = "*"
 colorlog = "*"
 dataclasses-json = "*"
 
-[requires]
-python_version = "3.7"
