@@ -1,5 +1,20 @@
+import os
+
 from fnac_prices import settings
 from fnac_prices.models.product import Inventory, Renewed, Changed
+from fnac_prices.utils.type import AnyPath
+
+
+def create_directory(tmp_dir: AnyPath) -> bool:
+    try:
+        os.makedirs(tmp_dir)
+    except FileExistsError:
+        pass
+
+    if os.path.isdir(tmp_dir):
+        return True
+    else:
+        return False
 
 
 def write_inventory_file(inventory: Inventory):

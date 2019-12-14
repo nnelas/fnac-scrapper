@@ -14,6 +14,7 @@ class ManagedApp:
         self.password = password
         self.input_path = input_path
         self.logger = logger
+        self.helper = Helper()
         self.fnac = FNACSelenium(self.email, self.password)
 
     def __run_login(self):
@@ -29,7 +30,7 @@ class ManagedApp:
         self.logger.info("Opening inventory...")
         self.fnac.open_inventory(1)
         total_prod = self.fnac.get_total_products()
-        total_pages = Helper.get_number_of_pages(total_prod)
+        total_pages = self.helper.get_number_of_pages(total_prod)
         self.logger.info("Found a total of '{}' products".format(total_prod))
 
         for index in range(1, total_pages):
@@ -45,9 +46,9 @@ class ManagedApp:
 
     def __change_prices(self, inventory):
         self.logger.info("Searching for lower prices...")
-        renewed = Helper.build_prices_match(inventory)
+        renewed = self.helper.build_prices_match(inventory)
         file.write_match_file(renewed)
-        changed = Helper.build_lowest_prices(renewed)
+        changed = self.helper.build_lowest_prices(renewed)
         file.write_changed_file(changed)
         self.logger.info("Found a total of '{}' products to change"
                          .format(len(changed.products)))
@@ -56,6 +57,7 @@ class ManagedApp:
     def run(self):
         if self.input_path is None:
             self.logger.warning("Initializing ManagedApp without inventory file")
+            file.create_directory(settings.LOGS_DIR)    # create if not exists
             self.__run_login()
             inventory = self.__get_inventory()
             file.write_inventory_file(inventory)
