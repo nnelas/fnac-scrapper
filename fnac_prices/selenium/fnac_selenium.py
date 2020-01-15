@@ -1,58 +1,59 @@
 import logging
-import re
 import time
 
+import re
+from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 
 from fnac_prices import settings
-from selenium import webdriver
-
-from fnac_prices.exceptions.fnac import FNACLoginException
+from fnac_prices.exceptions.fnac_exceptions import FnacLoginException
 from fnac_prices.models.product import Product, Inventory, Offer, Changed
 
 
-class FNACSelenium:
-    def __init__(self, email: str, password: str):
-        self.email = email
-        self.password = password
+class FnacSelenium:
+    def __init__(self, debug: bool, options: Options, inventory: Inventory):
+        self.email = None
+        self.password = None
         self.logger = logging.getLogger("Selenium")
-        self.browser = self.__make_selenium()
-        self.inventory = Inventory()
+        self.browser = self.__make_selenium(debug, options)
+        self.inventory = inventory
 
-    @staticmethod
-    def __make_selenium():
-        options = Options()
-        options.headless = settings.HEADLESS
+    def __make_selenium(self, debug: bool, options: Options):
+        if not debug:
+            options.headless = settings.HEADLESS
+        else:
+            options.headless = False
         return webdriver.Chrome(settings.CHROME_PATH, chrome_options=options)
 
-    def __login(self):
+    def __login(self, email: str, password: str):
         try:
-            username = self.browser.find_element_by_id("email")
-            password = self.browser.find_element_by_id("password")
-            button = self.browser.find_element_by_class_name("button__signin")
+            element_username = self.browser.find_element_by_id("email")
+            element_password = self.browser.find_element_by_id("password")
+            element_button = self.browser.find_element_by_class_name("button__signin")
 
-            if not username.get_attribute("value"):
-                username.send_keys(self.email)
+            if not element_username.get_attribute("value"):
+                element_username.send_keys(email)
 
-            password.send_keys(self.password)
-            button.click()
+            element_password.send_keys(password)
+            element_button.click()
 
             time.sleep(settings.TIMER_PAGE)
 
             if settings.LOGIN_URL in self.browser.current_url:
-                raise FNACLoginException
+                raise FnacLoginException
 
         except NoSuchElementException:  # most likely already logged in
             pass
 
-    def make_login(self):
+    def make_login(self, email: str, password: str):
+        self.email, self.password = email, password  # cache it for future usages
         self.browser.get(settings.LOGIN_URL)
-        self.__login()
+        self.__login(email, password)
 
     def open_inventory(self, index: int):
         self.browser.get(settings.INVENTORY_URL.format(id=index, num=settings.PRODUCTS))
-        self.__login()
+        self.__login(self.email, self.password)
 
     def get_total_products(self) -> int:
         total = self.browser.find_element_by_class_name("filters__total").text
@@ -83,7 +84,7 @@ class FNACSelenium:
                                  .format(idx, idx + 10))
             try:
                 self.browser.get(product.url)
-                product.view = self.browser.find_element_by_class_name("prod")\
+                product.view = self.browser.find_element_by_class_name("prod") \
                     .find_element_by_tag_name("a").get_attribute("href")
                 time.sleep(settings.TIMER_OP)
             except NoSuchElementException:
@@ -96,9 +97,9 @@ class FNACSelenium:
             try:
                 if idx % 10 == 0:
                     self.logger.info("Fetching other prices from products {} to {}"
-                                     .format(idx, idx+10))
+                                     .format(idx, idx + 10))
                 self.browser.get(product.view)
-                product.name = self.browser\
+                product.name = self.browser \
                     .find_element_by_class_name("f-productHeader-Title").text
                 time.sleep(settings.TIMER_OP)
 
@@ -134,15 +135,24 @@ class FNACSelenium:
         for product in changed.products:
             try:
                 self.browser.get(product.url)
-                price = self.browser.find_element_by_id("shop_product_price")
-                price.clear()
-                price.send_keys(str(product.new_offer.price))
+                element_price = self.browser.find_element_by_id("shop_product_price")
+                element_price.clear()
+                element_price.send_keys(str(product.new_offer.price))
                 button = self.browser.find_element_by_id("shop_product_publish")
                 button.click()
-                self.logger.info("Changed price successfully for item: '{}' - "
-                                 "old price: '{}', new price: '{}'"
-                                 .format(product.ean, product.old_offer.price,
-                                         product.new_offer.price))
+
+                element_alert = self.browser.find_element_by_class_name("alert")
+
+                if "A atualização foi efetuada" in element_alert.text:
+                    self.logger.info("Changed price successfully for item: '{}' - "
+                                     "old price: '{}', new price: '{}'"
+                                     .format(product.ean, product.old_offer.price,
+                                             product.new_offer.price))
+                else:
+                    alert_text: str = element_alert.text
+                    self.logger.error("Couldn't change price for item '{}': '{}'"
+                                      .format(product.ean, alert_text.replace("\n", ". ")))
+
                 time.sleep(settings.TIMER_OP)
             except Exception:
                 self.logger.warning("Couldn't change price for item: '{}'"

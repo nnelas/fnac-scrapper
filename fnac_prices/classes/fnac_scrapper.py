@@ -1,27 +1,27 @@
 import logging
 
 from fnac_prices import settings
-from fnac_prices.exceptions.fnac import FNACLoginException
-from fnac_prices.selenium.fnac import FNACSelenium
+from fnac_prices.exceptions.fnac_exceptions import FnacLoginException
+from fnac_prices.selenium.fnac_selenium import FnacSelenium
 from fnac_prices.utils import file
-from fnac_prices.utils.helper import Helper
+from fnac_prices.utils.fnac_helper import FnacHelper
 
 
-class ManagedApp:
-    def __init__(self, email: str, password: str, input_path: str = None,
-                 logger: logging.Logger = logging.getLogger("ManagedApp")):
+class FnacScrapper:
+    def __init__(self, email: str, password: str, fnac_selenium: FnacSelenium, fnac_helper: FnacHelper,
+                 input_path: str = None, logger: logging.Logger = logging.getLogger("ManagedApp")):
         self.email = email
         self.password = password
         self.input_path = input_path
         self.logger = logger
-        self.helper = Helper()
-        self.fnac = FNACSelenium(self.email, self.password)
+        self.fnac = fnac_selenium
+        self.helper = fnac_helper
 
-    def __run_login(self):
+    def __run_login(self, email: str, password: str):
         self.logger.info("Logging in...")
         try:
-            self.fnac.make_login()
-        except FNACLoginException:
+            self.fnac.make_login(email, password)
+        except FnacLoginException:
             self.logger.error("Couldn't login at '{}'. Please check your credentials."
                               .format(settings.HOMEPAGE))
             exit()
@@ -55,10 +55,10 @@ class ManagedApp:
         self.fnac.change_product_price(changed)
 
     def run(self):
+        self.__run_login(self.email, self.password)
         if self.input_path is None:
             self.logger.warning("Initializing ManagedApp without inventory file")
             file.create_directory(settings.LOGS_DIR)    # create if not exists
-            self.__run_login()
             inventory = self.__get_inventory()
             file.write_inventory_file(inventory)
         else:

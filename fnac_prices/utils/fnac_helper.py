@@ -4,7 +4,10 @@ from fnac_prices import settings
 from fnac_prices.models.product import Inventory, Renewed, Match, Changed, Market, Offer
 
 
-class Helper:
+class FnacHelper:
+    def __init__(self):
+        pass
+
     @staticmethod
     def get_number_of_pages(num_products: int) -> int:
         return math.ceil(num_products/settings.PRODUCTS)

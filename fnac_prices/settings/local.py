@@ -14,8 +14,8 @@ CHROME_PATH = os.path.join(DRIVERS_DIR, "chromedriver")
 HEADLESS = True
 
 # Timers
-TIMER_PAGE = 5
-TIMER_OP = 3
+TIMER_PAGE = 3
+TIMER_OP = 2
 
 # Logs
 now = datetime.now()
