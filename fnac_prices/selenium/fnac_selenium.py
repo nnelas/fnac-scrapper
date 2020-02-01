@@ -130,6 +130,26 @@ class FnacSelenium:
                                     "'{}'".format(product.ean))
         return self.inventory
 
+    def change_products_price(self, changed: Changed):
+        self.open_inventory(1)  # only needed to login, if input file is added
+        for product in changed.products:
+            try:
+                self.__change_product_price(product)
+            except Exception:
+                self.logger.warning("Couldn't change price for item: '{}'"
+                                    .format(product.ean))
+
+    def __change_product_price(self, product: Market):
+        self.browser.get(product.url)
+        element_price = self.browser.find_element_by_id("shop_product_price")
+        element_price.clear()
+        element_price.send_keys(str(product.new_offer.price))
+        time.sleep(settings.TIMER_OP)
+        result = self.__submit_price_change(product)
+        while not result:
+            time.sleep(settings.TIMER_OP)
+            result = self.__submit_price_change(product)
+
     def __submit_price_change(self, product: Market) -> bool:
         button = self.browser.find_element_by_id("shop_product_publish")
         button.click()
@@ -143,27 +163,7 @@ class FnacSelenium:
                                      product.new_offer.price))
             return True
         else:
-            alert_text: str = element_alert.text
+            alert_text = element_alert.text
             self.logger.error("Couldn't change price for item '{}': '{}'. Retrying..."
                               .format(product.ean, alert_text.replace("\n", ". ")))
             return False
-
-    def __change_product_price(self, product: Market):
-        self.browser.get(product.url)
-        element_price = self.browser.find_element_by_id("shop_product_price")
-        element_price.clear()
-        element_price.send_keys(str(product.new_offer.price))
-        time.sleep(5)
-        result = self.__submit_price_change(product)
-        while not result:
-            time.sleep(5)
-            result = self.__submit_price_change(product)
-
-    def change_products_price(self, changed: Changed):
-        self.open_inventory(1)  # only needed to login, if input file is added
-        for product in changed.products:
-            try:
-                self.__change_product_price(product)
-            except Exception:
-                self.logger.warning("Couldn't change price for item: '{}'"
-                                    .format(product.ean))
