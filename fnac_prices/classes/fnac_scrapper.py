@@ -52,13 +52,13 @@ class FnacScrapper:
         file.write_changed_file(changed)
         self.logger.info("Found a total of '{}' products to change"
                          .format(len(changed.products)))
-        self.fnac.change_product_price(changed)
+        self.fnac.change_products_price(changed)
 
     def run(self):
         self.__run_login(self.email, self.password)
+        file.create_directory(settings.LOGS_DIR)    # create if not exists
         if self.input_path is None:
             self.logger.warning("Initializing ManagedApp without inventory file")
-            file.create_directory(settings.LOGS_DIR)    # create if not exists
             inventory = self.__get_inventory()
             file.write_inventory_file(inventory)
         else:
