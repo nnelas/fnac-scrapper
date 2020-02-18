@@ -9,4 +9,5 @@ verify_ssl = true
 selenium = "*"
 colorlog = "*"
 dataclasses-json = "*"
+dataclasses = "*"
 

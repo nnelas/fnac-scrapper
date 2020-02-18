@@ -7,6 +7,8 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 
 from fnac_prices import settings
+from fnac_prices.classes.fnac_error_handler import FnacErrorHandler
+from fnac_prices.classes.fnac_error_mapper import FnacErrorMapper
 from fnac_prices.exceptions.fnac_exceptions import FnacLoginException
 from fnac_prices.models.product import Product, Inventory, Offer, Changed, Market
 
@@ -18,6 +20,8 @@ class FnacSelenium:
         self.logger = logging.getLogger("Selenium")
         self.browser = self.__make_selenium(debug, options)
         self.inventory = inventory
+        self.fnac_error_mapper = FnacErrorMapper()
+        self.fnac_error_handler = FnacErrorHandler(self.browser)
 
     def __make_selenium(self, debug: bool, options: Options):
         if not debug:
@@ -134,21 +138,15 @@ class FnacSelenium:
         self.open_inventory(1)  # only needed to login, if input file is added
         for product in changed.products:
             try:
-                self.__change_product_price(product)
+                self.browser.get(product.url)
+                element_price = self.browser.find_element_by_id("shop_product_price")
+                element_price.clear()
+                element_price.send_keys(str(product.new_offer.price))
+                time.sleep(settings.TIMER_OP)
+                self.__submit_price_change(product)
             except Exception:
                 self.logger.warning("Couldn't change price for item: '{}'"
                                     .format(product.ean))
-
-    def __change_product_price(self, product: Market):
-        self.browser.get(product.url)
-        element_price = self.browser.find_element_by_id("shop_product_price")
-        element_price.clear()
-        element_price.send_keys(str(product.new_offer.price))
-        time.sleep(settings.TIMER_OP)
-        result = self.__submit_price_change(product)
-        while not result:
-            time.sleep(settings.TIMER_OP)
-            result = self.__submit_price_change(product)
 
     def __submit_price_change(self, product: Market) -> bool:
         button = self.browser.find_element_by_id("shop_product_publish")
@@ -164,6 +162,14 @@ class FnacSelenium:
             return True
         else:
             alert_text = element_alert.text
-            self.logger.error("Couldn't change price for item '{}': '{}'. Retrying..."
-                              .format(product.ean, alert_text.replace("\n", ". ")))
-            return False
+            self.logger.warning("Couldn't change price for item '{}': '{}'. Retrying..."
+                                .format(product.ean, alert_text.replace("\n", ". ")))
+
+            mapped_error = self.fnac_error_mapper.map(alert_text)
+            is_recoverable = self.fnac_error_handler.run_error_recovery(mapped_error)
+            if is_recoverable:
+                self.__submit_price_change(product)
+            else:
+                self.logger.error("Couldn't change price for item '{}': '{}'."
+                                  .format(product.ean, alert_text.replace("\n", ". ")))
+                return False
