@@ -8,7 +8,7 @@ LOGS_DIR = os.path.join(PROJECT_DIR, "logs")
 
 # Drivers paths
 DRIVERS_DIR = os.path.join(PROJECT_DIR, "drivers")
-CHROME_PATH = os.path.join(DRIVERS_DIR, "chromedriver")
+CHROME_PATH = os.path.join(DRIVERS_DIR, "mac", "chromedriver_80")
 
 # Drivers options
 HEADLESS = True
